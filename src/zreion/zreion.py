@@ -85,7 +85,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
         kkz *= Lz / Nz
         deconv_window = (sinc(kkx / 2) * sinc(kky / 2) * sinc(kkz / 2))**2
     else:
-        deconv_window = np.ones_like(density_fft)
+        deconv_window = np.ones_like(density_fft, dtype=np.float64)
 
     assert bias_val.shape == density_fft.shape, "Bias and density grids are not compatible"
     assert smoothing_window.shape == density_fft.shape, "Smoothing window and density grids are not compatible"
@@ -97,7 +97,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     density_fft /= deconv_window
 
     # inverse FFT
-    zreion = np.fft.irfftn(density_fft)
+    zreion = np.fft.irfftn(density_fft, density.shape)
 
     # finish computing zreion field
     zreion *= (1 + zmean)
@@ -109,9 +109,9 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
 def tophat(x):
     # compute tophat window function
     return np.where(
-        x > 1e-6, 3 * (np.sin(x) - np.cos(x) / x) / x**3, 1 - x**2 / 10
+        np.abs(x) > 1e-6, 3 * (np.sin(x) - x * np.cos(x)) / x**3, 1 - x**2 / 10.0
     )
 
 def sinc(x):
     # compute sinc(x) = sin(x)/x
-    return np.where(x > 1e-6, np.sin(x) / x, 1 - x**2 / 6)
+    return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x**2 / 6.0)

@@ -10,7 +10,19 @@
 import sys
 
 from pkg_resources import VersionConflict, require
-from setuptools import setup
+from setuptools import setup, Extension
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    def cythonize(*args, **kwargs):
+        from Cython.Build import cythonize
+        return cythonize(*args, **kwargs)
+
+zreion_ext = Extension(
+    "zreion._zreion",
+    sources=["src/zreion/zreion.pyx"],
+    define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+)
 
 try:
     require('setuptools>=38.3')
@@ -20,4 +32,7 @@ except VersionConflict:
 
 
 if __name__ == "__main__":
-    setup(use_pyscaffold=True)
+    setup(
+        use_pyscaffold=True,
+        ext_modules=cythonize([zreion_ext], language_level=3),
+    )

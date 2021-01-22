@@ -11,12 +11,16 @@ import sys
 
 from pkg_resources import VersionConflict, require
 from setuptools import setup, Extension
+
 try:
     from Cython.Build import cythonize
 except ImportError:
+
     def cythonize(*args, **kwargs):
         from Cython.Build import cythonize
+
         return cythonize(*args, **kwargs)
+
 
 zreion_ext = Extension(
     "zreion._zreion",
@@ -25,7 +29,7 @@ zreion_ext = Extension(
 )
 
 try:
-    require('setuptools>=38.3')
+    require("setuptools>=38.3")
 except VersionConflict:
     print("Error: version of setuptools is too old (<38.3)!")
     sys.exit(1)

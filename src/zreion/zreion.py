@@ -8,16 +8,17 @@ from ._zreion import _apply_zreion
 # define constants
 b0 = 1.0 / 1.686
 
+
 def tophat(x):
     # compute tophat window function
     return np.where(
-        np.abs(x) > 1e-6, 3 * (np.sin(x) - x * np.cos(x)) / x**3, 1 - x**2 / 10.0
+        np.abs(x) > 1e-6, 3 * (np.sin(x) - x * np.cos(x)) / x ** 3, 1 - x ** 2 / 10.0
     )
 
 
 def sinc(x):
     # compute sinc(x) = sin(x)/x
-    return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x**2 / 6.0)
+    return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x ** 2 / 6.0)
 
 
 def _fft3d(array, direction="f"):
@@ -54,17 +55,21 @@ def _fft3d(array, direction="f"):
     if len(data_shape) != 3:
         raise ValueError("input array must be a 3-dimensional array")
     padded_shape = (data_shape[0], data_shape[1], 2 * (data_shape[2] + 1))
-    full_array = pyfftw.empty_aligned(padded_shape, input_dtype, n=pyfftw.simd_alignment)
+    full_array = pyfftw.empty_aligned(
+        padded_shape, input_dtype, n=pyfftw.simd_alignment
+    )
 
     # make input and output arrays
-    real_input = full_array[:, :, :data_shape[2]]
+    real_input = full_array[:, :, : data_shape[2]]
     complex_output = full_array.view(output_dtype)
 
     if direction == "f":
         fftw_obj = pyfftw.FFTW(real_input, complex_output, axes=(0, 1, 2))
         real_input[:] = array
     else:
-        fftw_obj = pyfftw.FFTW(complex_output, real_input, axes=(0, 1, 2), direction="FFTW_BACKWARD")
+        fftw_obj = pyfftw.FFTW(
+            complex_output, real_input, axes=(0, 1, 2), direction="FFTW_BACKWARD"
+        )
         complex_output[:] = array
 
     # perform computation and return
@@ -137,8 +142,8 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
 
     # compute bias factor
     kkx, kky, kkz = np.meshgrid(kx, ky, kz)
-    spherical_k = np.sqrt(kkx**2 + kky**2 + kkz**2)
-    bias_val = b0 / (1 + spherical_k / k0)**alpha
+    spherical_k = np.sqrt(kkx ** 2 + kky ** 2 + kkz ** 2)
+    bias_val = b0 / (1 + spherical_k / k0) ** alpha
 
     # compute smoothing factor
     smoothing_window = tophat(spherical_k * Rsmooth)
@@ -148,13 +153,19 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
         kkx *= Lx / Nx
         kky *= Ly / Ny
         kkz *= Lz / Nz
-        deconv_window = (sinc(kkx / 2) * sinc(kky / 2) * sinc(kkz / 2))**2
+        deconv_window = (sinc(kkx / 2) * sinc(kky / 2) * sinc(kkz / 2)) ** 2
     else:
         deconv_window = np.ones_like(density_fft, dtype=np.float64)
 
-    assert bias_val.shape == density_fft.shape, "Bias and density grids are not compatible"
-    assert smoothing_window.shape == density_fft.shape, "Smoothing window and density grids are not compatible"
-    assert deconv_window.shape == density_fft.shape, "Deconvolution window and density grids are not compatible"
+    assert (
+        bias_val.shape == density_fft.shape
+    ), "Bias and density grids are not compatible"
+    assert (
+        smoothing_window.shape == density_fft.shape
+    ), "Smoothing window and density grids are not compatible"
+    assert (
+        deconv_window.shape == density_fft.shape
+    ), "Deconvolution window and density grids are not compatible"
 
     # apply transformations to Fourier field
     density_fft *= bias_val
@@ -165,7 +176,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     zreion = np.fft.irfftn(density_fft, density.shape)
 
     # finish computing zreion field
-    zreion *= (1 + zmean)
+    zreion *= 1 + zmean
     zreion += zmean
 
     return zreion
@@ -238,7 +249,7 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
     density = _fft3d(density_fft, direction="b")
 
     # finish computing zreion field
-    zreion *= (1 + zmean)
+    zreion *= 1 + zmean
     zreion += zmean
 
     return zreion

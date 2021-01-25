@@ -211,7 +211,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     kz = np.fft.rfftfreq(Nz, d=dz)  # note we're using rfftfreq!
 
     # compute bias factor
-    kkx, kky, kkz = np.meshgrid(kx, ky, kz)
+    kkx, kky, kkz = np.meshgrid(kx, ky, kz, indexing="ij")
     spherical_k = np.sqrt(kkx ** 2 + kky ** 2 + kkz ** 2)
     bias_val = b0 / (1 + spherical_k / k0) ** alpha
 
@@ -319,8 +319,12 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
     density_fft = _fft3d(density, array_shape, direction="f")
 
     # call cython funtion for applying bias relation
+    # need to tell function if last dimension has an odd number of elements
+    odd_Nz = density.shape[2] % 2 == 1
     density_fft = np.asarray(
-        _zreion._apply_zreion(density_fft, alpha, k0, Lx, Ly, Lz, Rsmooth, deconvolve)
+        _zreion._apply_zreion(
+            density_fft, alpha, k0, Lx, Ly, Lz, Rsmooth, deconvolve, odd_Nz
+        )
     )
 
     # perform inverse fft

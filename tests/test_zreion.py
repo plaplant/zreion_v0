@@ -30,12 +30,37 @@ def fake_data_random():
     return data, is_random
 
 
+@pytest.fixture
+def fake_data_deterministic_anisotropic():
+    is_random = False
+    data_shape = (13, 11, 9)
+    data = np.empty(data_shape, dtype=np.float32)
+    for i in range(data_shape[0]):
+        for j in range(data_shape[1]):
+            for k in range(data_shape[2]):
+                data[i, j, k] = i + 1.5 * j - k
+
+    return data, is_random
+
+
+@pytest.fixture
+def fake_data_random_anisotropic():
+    is_random = True
+    data_shape = (13, 11, 9)
+    np.random.seed(8675309)
+    data = np.asarray(np.random.normal(size=data_shape), dtype=np.float32)
+
+    return data, is_random
+
+
 # define cases decorator
 fake_data_cases = pytest_cases.parametrize_plus(
     "fake_data",
     [
         pytest_cases.fixture_ref(fake_data_deterministic),
         pytest_cases.fixture_ref(fake_data_random),
+        pytest_cases.fixture_ref(fake_data_deterministic_anisotropic),
+        pytest_cases.fixture_ref(fake_data_random_anisotropic),
     ]
 )
 
@@ -107,7 +132,9 @@ def test_fft3d_forward(fake_data):
     # run zreion fft
     input_shape = data.shape
     zreion_fft = zreion._fft3d(data, input_shape, direction="f")
-    assert np.allclose(numpy_fft, zreion_fft)
+    # need relatively high tolerance because numpy fft is internally done at
+    # double precision, seemingly without a way to change it
+    assert np.allclose(numpy_fft, zreion_fft, atol=1e-4)
     assert zreion_fft.dtype.type is np.complex64
 
     return
@@ -141,12 +168,7 @@ def test_fft3d_backward(fake_data):
     # run zreion fft
     input_shape = data.shape
     zreion_fft = zreion._fft3d(fake_data_ft, input_shape, direction="b")
-    if is_random:
-        # need slightly larger tolerance for random input)
-        atol = 1e-6
-    else:
-        atol = 1e-8
-    assert np.allclose(zreion_fft, data, atol=atol)
+    assert np.allclose(zreion_fft, data, atol=1e-6)
     assert zreion_fft.dtype.type is np.float32
 
     return

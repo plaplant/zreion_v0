@@ -42,6 +42,7 @@ cpdef numpy.complex64_t[:, :, :] _apply_zreion(
     numpy.float64_t Lz,
     numpy.float64_t Rsmooth,
     numpy.npy_bool deconvolve,
+    numpy.npy_bool odd_Nz,
 ):
     cdef int i,j,k
     cdef double kx,ky,kz,bias
@@ -51,16 +52,18 @@ cpdef numpy.complex64_t[:, :, :] _apply_zreion(
     cdef int Ny = density.shape[1]
     cdef int Nz = density.shape[2]
     cdef int Nz_full = 2 * (Nz - 1)
+    if odd_Nz:
+        Nz_full += 1
 
     for i in prange(Nx, nogil=True):
-        if i < (Nx // 2):
+        if i < (Nx // 2) + 1:
             kx = 2 * M_PI / Nx * i
         else:
             kx = 2 * M_PI / Nx * (i - Nx)
         kx_phys = kx * (Nx / Lx)
 
         for j in range(Ny):
-            if j < (Ny // 2):
+            if j < (Ny // 2) + 1:
                 ky = 2 * M_PI / Ny * j
             else:
                 ky = 2 * M_PI / Ny * (j - Ny)

@@ -43,24 +43,24 @@ cpdef numpy.complex64_t[:, :, :] _apply_zreion(
     numpy.float64_t Rsmooth,
     numpy.npy_bool deconvolve,
 ):
-    cdef Py_ssize_t i,j,k
-    cdef double kx,ky,kz,kr,bias
+    cdef int i,j,k
+    cdef double kx,ky,kz,bias
     cdef double kx_phys,ky_phys,kz_phys,kr_phys
     cdef double deconv_window,smoothing_window
-    cdef size_t Nx = density.shape[0]
-    cdef size_t Ny = density.shape[1]
-    cdef size_t Nz = density.shape[2]
-    cdef size_t Nz_full = 2 * (Nz - 1)
+    cdef int Nx = density.shape[0]
+    cdef int Ny = density.shape[1]
+    cdef int Nz = density.shape[2]
+    cdef int Nz_full = 2 * (Nz - 1)
 
     for i in prange(Nx, nogil=True):
-        if i < Nx // 2:
+        if i < (Nx // 2):
             kx = 2 * M_PI / Nx * i
         else:
             kx = 2 * M_PI / Nx * (i - Nx)
         kx_phys = kx * (Nx / Lx)
 
         for j in range(Ny):
-            if j < Ny // 2:
+            if j < (Ny // 2):
                 ky = 2 * M_PI / Ny * j
             else:
                 ky = 2 * M_PI / Ny * (j - Ny)
@@ -70,7 +70,6 @@ cpdef numpy.complex64_t[:, :, :] _apply_zreion(
                 kz = 2 * M_PI / Nz_full * k
                 kz_phys = kz * (Nz_full / Lz)
 
-                kr = sqrt(kx**2 + ky**2 + kz**2)
                 kr_phys = sqrt(kx_phys**2 + ky_phys**2 + kz_phys**2)
                 bias = b0_zre / (1 + kr_phys / k0)**alpha
                 smoothing_window = tophat(kr_phys * Rsmooth)

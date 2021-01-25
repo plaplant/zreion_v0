@@ -11,14 +11,62 @@ b0 = 1.0 / 1.686
 
 
 def tophat(x):
-    # compute tophat window function
+    """
+    Compute spherical tophat Fourier window function.
+
+    Compute the window function of a Fourier tophat window function W_R(k),
+    where R is the characteristic radius of the tophat in real space and k is
+    the amplitude of the Fourier vector. As can be shown, the tophat function
+    has the form:
+        W_R(k) = 3 * (sin(R * k) - (R * k) * cos(R * k)) / (R * k)**3.
+    For small values of R*k, we use the Taylor series approximation, which is:
+        W_R(k) ~ 1 - (R * k)**2 / 10.
+
+    Note that this function itself does not handle a potential RuntimeWarning
+    arising from arguments that cause division by zero. However, np.where
+    statement handles this cases appropriately, so it can be generally be
+    ignored by the user for typical arguments.
+
+    Parameters
+    ----------
+    x : ndarray
+        An array containing the arguments R*k.
+
+    Returns
+    -------
+    ndarray
+        An array of the same size containing the tophat applied to each element.
+    """
     return np.where(
         np.abs(x) > 1e-6, 3 * (np.sin(x) - x * np.cos(x)) / x ** 3, 1 - x ** 2 / 10.0
     )
 
 
 def sinc(x):
-    # compute sinc(x) = sin(x)/x
+    """
+    Compute sinc(x) = sin(x) / x function.
+
+    Compute the sinc function sin(x) / x, which is necessary for deconvolving
+    the cloud-in-cell (CIC) window function typically used to deposit particles
+    onto a grid. For small values of x, we use the Taylor series appriximation,
+    which is:
+        sinc(x) ~ 1 - x**2 / 6.
+
+    Note that this function itself does not handle a potential RuntimeWarning
+    arising from arguments that cause division by zero. However, np.where
+    statement handles this cases appropriately, so it can be generally be
+    ignored by the user for typical arguments.
+
+    Parameters
+    ----------
+    x : ndarray
+        An array containing the arguments x.
+
+    Returns
+    -------
+    ndarray
+        An array of the same size containing sinc applied to each element.
+    """
     return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x ** 2 / 6.0)
 
 

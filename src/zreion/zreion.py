@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import warnings
 import numpy as np
 import pyfftw
 
@@ -29,7 +30,7 @@ def _fft3d(array, data_shape, direction="f"):
     ----------
     array : ndarray
         The array to apply the transform to.
-    data_shape : tuple of int
+    data_shape : 3-ple of int
         The shape of the input data array. Used for determining the size of the
         output array for a forward transform and the target shape for a backward
         one.
@@ -43,21 +44,41 @@ def _fft3d(array, data_shape, direction="f"):
         An ndarray of the resulting transform.
     """
     if direction.lower() not in ["f", "b"]:
-        raise ValueError(f'"direction" must be "f" or "b", got {direction}')
+        raise ValueError(f'"direction" must be "f" or "b", got "{direction}"')
     dtype = array.dtype.type
-    if dtype is np.float32 or dtype is np.complex64:
-        # single precision
+    if direction.lower() == "f":
+        if dtype is np.float32:
+            precision = "single"
+        elif dtype is np.float64:
+            precision = "double"
+        else:
+            raise ValueError(
+                "a forward transform requires input have np.float32 or np.float64 "
+                "datatype"
+            )
+    else:  # "b"
+        if dtype is np.complex64:
+            precision = "single"
+        elif dtype is np.complex128:
+            precision = "double"
+        else:
+            raise ValueError(
+                "a backward transform requires input to have np.complex64 or "
+                "np.complex128 datatype"
+            )
+
+    if precision == "single":
         input_dtype = "float32"
         output_dtype = "complex64"
-    elif dtype is np.float64 or dtype is np.complex128:
-        # double precision
+    else:  # "double"
         input_dtype = "float64"
         output_dtype = "complex128"
-    else:
-        raise ValueError("input array must be a real dtype of np.float32 or np.float64")
 
-    if len(data_shape) != 3:
+    # define size of FFTW arrays
+    if len(array.shape) != 3:
         raise ValueError("input array must be a 3-dimensional array")
+    if len(data_shape) != 3:
+        raise ValueError("data_shape must have 3 dimensions")
     padded_shape = (data_shape[0], data_shape[1], 2 * (data_shape[2] // 2 + 1))
     full_array = pyfftw.empty_aligned(
         padded_shape, input_dtype, n=pyfftw.simd_alignment
@@ -147,14 +168,20 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     bias_val = b0 / (1 + spherical_k / k0) ** alpha
 
     # compute smoothing factor
-    smoothing_window = tophat(spherical_k * Rsmooth)
+    # turn off numpy errors that come from near-zero values
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        smoothing_window = tophat(spherical_k * Rsmooth)
 
     if deconvolve:
         # compute deconvolution window in grid units
         kkx *= Lx / Nx
         kky *= Ly / Ny
         kkz *= Lz / Nz
-        deconv_window = (sinc(kkx / 2) * sinc(kky / 2) * sinc(kkz / 2)) ** 2
+        # turn off numpy errors that come from near-zero values
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            deconv_window = (sinc(kkx / 2) * sinc(kky / 2) * sinc(kkz / 2)) ** 2
     else:
         deconv_window = np.ones_like(density_fft, dtype=np.float64)
 

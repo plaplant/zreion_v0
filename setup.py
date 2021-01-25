@@ -12,14 +12,8 @@ import sys
 from pkg_resources import VersionConflict, require
 from setuptools import setup, Extension
 
-try:
-    from Cython.Build import cythonize
-except ImportError:
-
-    def cythonize(*args, **kwargs):
-        from Cython.Build import cythonize
-
-        return cythonize(*args, **kwargs)
+import numpy
+from Cython.Build import cythonize
 
 
 zreion_ext = Extension(
@@ -31,6 +25,7 @@ zreion_ext = Extension(
     ],
     extra_compile_args=["-fopenmp"],
     extra_link_args=["-fopenmp"],
+    include_dirs=[numpy.get_include()],
 )
 
 try:

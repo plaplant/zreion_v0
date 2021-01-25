@@ -3,7 +3,7 @@
 import numpy as np
 import pyfftw
 
-from ._zreion import _apply_zreion
+from . import _zreion
 
 # define constants
 b0 = 1.0 / 1.686
@@ -21,7 +21,7 @@ def sinc(x):
     return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x ** 2 / 6.0)
 
 
-def _fft3d(array, direction="f"):
+def _fft3d(array, data_shape, direction="f"):
     """
     Apply an FFT using pyFFTW.
 
@@ -29,6 +29,10 @@ def _fft3d(array, direction="f"):
     ----------
     array : ndarray
         The array to apply the transform to.
+    data_shape : tuple of int
+        The shape of the input data array. Used for determining the size of the
+        output array for a forward transform and the target shape for a backward
+        one.
     direction : str
         The direction of the transform. Must be either "f" (for forward) or "b"
         (for backward).
@@ -41,20 +45,20 @@ def _fft3d(array, direction="f"):
     if direction.lower() not in ["f", "b"]:
         raise ValueError(f'"direction" must be "f" or "b", got {direction}')
     dtype = array.dtype.type
-    if dtype is np.float32:
+    if dtype is np.float32 or dtype is np.complex64:
         # single precision
         input_dtype = "float32"
         output_dtype = "complex64"
-    elif dtype is np.float64:
+    elif dtype is np.float64 or dtype is np.complex128:
         # double precision
         input_dtype = "float64"
         output_dtype = "complex128"
     else:
         raise ValueError("input array must be a real dtype of np.float32 or np.float64")
-    data_shape = array.shape
+
     if len(data_shape) != 3:
         raise ValueError("input array must be a 3-dimensional array")
-    padded_shape = (data_shape[0], data_shape[1], 2 * (data_shape[2] + 1))
+    padded_shape = (data_shape[0], data_shape[1], 2 * (data_shape[2] // 2 + 1))
     full_array = pyfftw.empty_aligned(
         padded_shape, input_dtype, n=pyfftw.simd_alignment
     )
@@ -83,7 +87,10 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     Parameters
     ----------
     density : numpy array
-        A numpy array of rank 3 holding the density field.
+        A numpy array of rank 3 holding the density field. Note this should be
+        the overdensity field delta = (rho - <rho>)/<rho>, where <rho> is the
+        average density value. This quantity has a mean of 0 and a minimum value
+        of -1.
     zmean : float
         The mean redshift of reionization.
     alpha : float
@@ -117,12 +124,6 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
             raise ValueError(
                 "boxsize must be either a single number or an array of length 3"
             )
-
-    # make sure that density is actually ovderdensity
-    rho_bar = np.mean(density)
-    if not np.isclose(rho_bar, 0.0):
-        density -= rho_bar
-        density /= rho_bar
 
     # compute FFT of density field
     density_fft = np.fft.rfftn(density)
@@ -193,7 +194,10 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
     Parameters
     ----------
     density : numpy array
-        A numpy array of rank 3 holding the density field.
+        A numpy array of rank 3 holding the density field. Note this should be
+        the overdensity field delta = (rho - <rho>)/<rho>, where <rho> is the
+        average density value. This quantity has a mean of 0 and a minimum value
+        of -1.
     zmean : float
         The mean redshift of reionization.
     alpha : float
@@ -233,23 +237,22 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
     else:
         Lx, Ly, Lz = boxsize
 
-    # make sure that density is actually ovderdensity
-    rho_bar = np.mean(density)
-    if not np.isclose(rho_bar, 0.0):
-        density -= rho_bar
-        density /= rho_bar
+    # save input array shape
+    array_shape = density.shape
 
     # perform fft
-    density_fft = _fft3d(density, direction="f")
+    density_fft = _fft3d(density, array_shape, direction="f")
 
     # call cython funtion for applying bias relation
-    density_fft = _apply_zreion(density_fft, alpha, k0, Lx, Ly, Lz, Rsmooth, deconvolve)
+    density_fft = np.asarray(
+        _zreion._apply_zreion(density_fft, alpha, k0, Lx, Ly, Lz, Rsmooth, deconvolve)
+    )
 
     # perform inverse fft
-    density = _fft3d(density_fft, direction="b")
+    density = _fft3d(density_fft, array_shape, direction="b")
 
     # finish computing zreion field
-    zreion *= 1 + zmean
-    zreion += zmean
+    density *= 1 + zmean
+    density += zmean
 
-    return zreion
+    return density

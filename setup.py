@@ -25,7 +25,12 @@ except ImportError:
 zreion_ext = Extension(
     "zreion._zreion",
     sources=["src/zreion/zreion.pyx"],
-    define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+    define_macros=[
+        ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"),
+        ("CYTHON_TRACE_NOGIL", "1"),
+    ],
+    extra_compile_args=["-fopenmp"],
+    extra_link_args=["-fopenmp"],
 )
 
 try:

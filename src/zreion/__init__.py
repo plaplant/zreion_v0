@@ -10,4 +10,4 @@ except DistributionNotFound:
 finally:
     del get_distribution, DistributionNotFound
 
-from .zreion import apply_zreion
+from .zreion import apply_zreion, apply_zreion_fast

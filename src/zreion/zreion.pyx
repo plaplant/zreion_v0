@@ -2,36 +2,39 @@
 
 # distutils: language = c
 # cython: linetrace=True
-# distutils: define_macros=CYTHON_TRACE_NOGIL=1
 # python imports
 import numpy as np
 import warnings
+from cython.parallel import prange
 # cython imports
 cimport numpy
 cimport cython
-from libc.math cimport sin, cos, sqrt, abs, M_PI
+from libc.math cimport sin, cos, sqrt, fabs, M_PI
 
 # define constants
 cdef numpy.float64_t b0_zre = 1.0 / 1.686
 
 
 # define C-only functions
-cdef float tophat(float x):
-    if abs(x) > 1e-6:
+@cython.cdivision(True)
+cdef double tophat(double x) nogil:
+    if fabs(x) > 1e-6:
         return 3 * (sin(x) - x * cos(x)) / x**3
     else:
         return 1 - x**2 / 10
 
-cdef float sinc(float x):
-    if abs(x) > 1e-6:
+@cython.cdivision(True)
+cdef double sinc(double x) nogil:
+    if fabs(x) > 1e-6:
         return sin(x) / x
     else:
         return 1 - x**2 / 6
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef numpy.ndarray[dtype=numpy.float32_t] _apply_zreion(
-    numpy.float32_t[:, :, ::1] density,
+@cython.cdivision(True)
+cpdef numpy.complex64_t[:, :, :] _apply_zreion(
+    numpy.complex64_t[:, :, :] density,
     numpy.float64_t alpha,
     numpy.float64_t k0,
     numpy.float64_t Lx,
@@ -41,30 +44,31 @@ cpdef numpy.ndarray[dtype=numpy.float32_t] _apply_zreion(
     numpy.npy_bool deconvolve,
 ):
     cdef Py_ssize_t i,j,k
-    cdef float kx,ky,kz,kr,bias
-    cdef kx_phys,ky_phys,kz_phys,kr_phys
-    cdef float deconv_window,smoothing_window
-    cdef unsigned long Nx = density.shape[0]
-    cdef unsigned long Ny = density.shape[1]
-    cdef unsigned long Nz = density.shape[2]
+    cdef double kx,ky,kz,kr,bias
+    cdef double kx_phys,ky_phys,kz_phys,kr_phys
+    cdef double deconv_window,smoothing_window
+    cdef size_t Nx = density.shape[0]
+    cdef size_t Ny = density.shape[1]
+    cdef size_t Nz = density.shape[2]
+    cdef size_t Nz_full = 2 * (Nz - 1)
 
-    for i in range(Nx):
+    for i in prange(Nx, nogil=True):
         if i < Nx // 2:
             kx = 2 * M_PI / Nx * i
         else:
             kx = 2 * M_PI / Nx * (i - Nx)
-        kx_phys *= Nx / Lx
+        kx_phys = kx * (Nx / Lx)
 
         for j in range(Ny):
             if j < Ny // 2:
                 ky = 2 * M_PI / Ny * j
             else:
-                ky = 2 * M_PI / Ny * (j - Nx)
-            ky_phys *= Ny / Ly
+                ky = 2 * M_PI / Ny * (j - Ny)
+            ky_phys = ky * (Ny / Ly)
 
-            for k in range(Nx + 1):
-                kz = 2 * M_PI / Nz * k
-                kz_phys *= Nz / Lz
+            for k in range(Nz):
+                kz = 2 * M_PI / Nz_full * k
+                kz_phys = kz * (Nz_full / Lz)
 
                 kr = sqrt(kx**2 + ky**2 + kz**2)
                 kr_phys = sqrt(kx_phys**2 + ky_phys**2 + kz_phys**2)
@@ -76,6 +80,7 @@ cpdef numpy.ndarray[dtype=numpy.float32_t] _apply_zreion(
                 else:
                     deconv_window = 1.0
 
-                density[i,j,k] *= bias * smoothing_window / deconv_window
+                # in-place multiplication causes compile error because of complex type
+                density[i,j,k] = density[i,j,k] * (bias * smoothing_window / deconv_window)
 
     return density

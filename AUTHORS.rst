@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Paul La Plante <plaplant@sas.upenn.edu>
+* Paul La Plante <plaplant@berkeley.edu>

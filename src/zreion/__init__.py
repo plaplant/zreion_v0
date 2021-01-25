@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Init file for zreion."""
 from pkg_resources import get_distribution, DistributionNotFound
+
 
 try:
     # Change here if project is renamed and does not equal the package name
@@ -10,4 +12,7 @@ except DistributionNotFound:  # pragma: no cover
 finally:
     del get_distribution, DistributionNotFound
 
+
 from .zreion import apply_zreion, apply_zreion_fast
+
+__all__ = ["apply_zreion", "apply_zreion_fast"]

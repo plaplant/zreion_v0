@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Tests for zreion.zreion module."""
 
 import pytest
 import pytest_cases
@@ -9,6 +10,7 @@ import zreion.zreion as zreion
 
 @pytest.fixture
 def fake_data_deterministic():
+    """Define a fixture for fake data."""
     is_random = False
     data_shape = (8, 8, 8)
     data = np.empty(data_shape, dtype=np.float32)
@@ -22,6 +24,7 @@ def fake_data_deterministic():
 
 @pytest.fixture
 def fake_data_random():
+    """Define a fixture for fake data."""
     is_random = True
     data_shape = (8, 8, 8)
     np.random.seed(8675309)
@@ -32,6 +35,7 @@ def fake_data_random():
 
 @pytest.fixture
 def fake_data_deterministic_anisotropic():
+    """Define a fixture for fake data."""
     is_random = False
     data_shape = (13, 11, 9)
     data = np.empty(data_shape, dtype=np.float32)
@@ -45,6 +49,7 @@ def fake_data_deterministic_anisotropic():
 
 @pytest.fixture
 def fake_data_random_anisotropic():
+    """Define a fixture for fake data."""
     is_random = True
     data_shape = (13, 11, 9)
     np.random.seed(8675309)
@@ -61,14 +66,14 @@ fake_data_cases = pytest_cases.parametrize_plus(
         pytest_cases.fixture_ref(fake_data_random),
         pytest_cases.fixture_ref(fake_data_deterministic_anisotropic),
         pytest_cases.fixture_ref(fake_data_random_anisotropic),
-    ]
+    ],
 )
 
 
 def test_tophat():
-    """Test tophat window function calculation"""
+    """Test tophat window function calculation."""
     invals = np.linspace(1, 10, num=50)
-    refvals = 3 * (np.sin(invals) - invals * np.cos(invals)) / invals**3
+    refvals = 3 * (np.sin(invals) - invals * np.cos(invals)) / invals ** 3
     outvals = zreion.tophat(invals)
     assert np.allclose(refvals, outvals)
 
@@ -80,7 +85,7 @@ def test_tophat():
 
     # also test small values
     invals = np.asarray([-1e-7, -1e-8, -1e-9, 0, 1e-9, 1e-8, 1e-7])
-    refvals = 1 - invals**2 / 10.0
+    refvals = 1 - invals ** 2 / 10.0
     # we get a numpy RuntimeWarning with small/invalid values
     with pytest.warns(RuntimeWarning) as record:
         outvals = zreion.tophat(invals)
@@ -94,7 +99,7 @@ def test_tophat():
 
 
 def test_sinc():
-    """Test sinc function calculation"""
+    """Test sinc function calculation."""
     invals = np.linspace(1, 10, num=50)
     refvals = np.sin(invals) / invals
     outvals = zreion.sinc(invals)
@@ -108,7 +113,7 @@ def test_sinc():
 
     # also test small values
     invals = np.asarray([-1e-7, -1e-8, -1e-9, 0, 1e-9, 1e-8, 1e-7])
-    refvals = 1 - invals**2 / 6.0
+    refvals = 1 - invals ** 2 / 6.0
     # we get a numpy RuntimeWarning with small/invalid values
     with pytest.warns(RuntimeWarning) as record:
         outvals = zreion.sinc(invals)
@@ -123,7 +128,7 @@ def test_sinc():
 
 @fake_data_cases
 def test_fft3d_forward(fake_data):
-    """Test _fft3d function"""
+    """Test _fft3d function."""
     data, is_random = fake_data
 
     # use numpy as reference FFT
@@ -142,7 +147,7 @@ def test_fft3d_forward(fake_data):
 
 @fake_data_cases
 def test_fft3d_forward_double_precision(fake_data):
-    """Test _fft3d function with double-precision"""
+    """Test _fft3d function with double-precision."""
     data, is_random = fake_data
     data = np.asarray(data, dtype=np.float64)
 
@@ -160,7 +165,7 @@ def test_fft3d_forward_double_precision(fake_data):
 
 @fake_data_cases
 def test_fft3d_backward(fake_data):
-    """Test backward _fft3d function"""
+    """Test backward _fft3d function."""
     data, is_random = fake_data
     # use numpy as reference FFT
     fake_data_ft = np.asarray(np.fft.rfftn(data), dtype=np.complex64)
@@ -176,7 +181,7 @@ def test_fft3d_backward(fake_data):
 
 @fake_data_cases
 def test_fft3d_backward_double(fake_data):
-    """Test backward _fft3d function with double-precision"""
+    """Test backward _fft3d function with double-precision."""
     data, is_random = fake_data
     data = np.asarray(data, dtype=np.float64)
     fake_data_ft = np.asarray(np.fft.rfftn(data), dtype=np.complex128)
@@ -191,7 +196,7 @@ def test_fft3d_backward_double(fake_data):
 
 
 def test_fft3d_direction_error(fake_data_deterministic):
-    """Test _fft3d error in direction kwarg"""
+    """Test _fft3d error in direction kwarg."""
     data, is_random = fake_data_deterministic
 
     # test giving a bogus direction
@@ -203,7 +208,7 @@ def test_fft3d_direction_error(fake_data_deterministic):
 
 
 def test_fft3d_datatype_errors(fake_data_deterministic):
-    """Test _fft3d errors with bad datatypes"""
+    """Test _fft3d errors with bad datatypes."""
     data, is_random = fake_data_deterministic
 
     # test using incorrect direction for real data
@@ -227,7 +232,7 @@ def test_fft3d_datatype_errors(fake_data_deterministic):
 
 
 def test_fft3d_rank_errors(fake_data_deterministic):
-    """Test _fft3d errors with data rank"""
+    """Test _fft3d errors with data rank."""
     data, is_random = fake_data_deterministic
     with pytest.raises(ValueError) as cm:
         zreion._fft3d(data, (0,), direction="f")
@@ -243,7 +248,7 @@ def test_fft3d_rank_errors(fake_data_deterministic):
 
 @fake_data_cases
 def test_apply_zreion(fake_data):
-    """Test apply_zreion"""
+    """Test apply_zreion."""
     data, is_random = fake_data
     # clean up input data
     if not is_random:
@@ -255,9 +260,9 @@ def test_apply_zreion(fake_data):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = True
-    zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
 
     # make sure results make sense
     if is_random:
@@ -269,7 +274,7 @@ def test_apply_zreion(fake_data):
 
     # also test passing in boxsize as a tuple--should give same answer
     boxsize = (boxsize, boxsize, boxsize)
-    zre2 = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre2 = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
     assert np.allclose(zre, zre2)
 
     return
@@ -277,7 +282,7 @@ def test_apply_zreion(fake_data):
 
 @fake_data_cases
 def test_apply_zreion_no_deconvolution(fake_data):
-    """Test apply_zreion with no deconvolution"""
+    """Test apply_zreion with no deconvolution."""
     data, is_random = fake_data
     # clean up input data
     if not is_random:
@@ -289,9 +294,9 @@ def test_apply_zreion_no_deconvolution(fake_data):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = False
-    zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
 
     # make sure results make sense
     if is_random:
@@ -305,7 +310,7 @@ def test_apply_zreion_no_deconvolution(fake_data):
 
 
 def test_apply_zreion_errors(fake_data_deterministic):
-    """Test errors in the apply_zreion function"""
+    """Test errors in the apply_zreion function."""
     data, is_random = fake_data_deterministic
 
     # define model parameters
@@ -313,27 +318,29 @@ def test_apply_zreion_errors(fake_data_deterministic):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = True
 
     # test using only a 1d density array
     data_1d = data[0, 0, :]
     with pytest.raises(ValueError) as cm:
-        zre = zreion.apply_zreion(data_1d, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+        zreion.apply_zreion(data_1d, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
     assert str(cm.value).startswith("density must be a 3d array")
 
     # test using a bad boxsize
     boxsize = (10.0, 10.0)
     with pytest.raises(ValueError) as cm:
-        zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
-    assert str(cm.value).startswith("boxsize must be either a single number or an array of length 3")
+        zreion.apply_zreion(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
+    assert str(cm.value).startswith(
+        "boxsize must be either a single number or an array of length 3"
+    )
 
     return
 
 
 @fake_data_cases
 def test_apply_zreion_fast(fake_data):
-    """Test apply_zreion_fast"""
+    """Test apply_zreion_fast."""
     data, is_random = fake_data
     # clean up input data
     if not is_random:
@@ -345,9 +352,9 @@ def test_apply_zreion_fast(fake_data):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = True
-    zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
 
     # make sure results make sense
     if is_random:
@@ -359,7 +366,9 @@ def test_apply_zreion_fast(fake_data):
 
     # also test passing in boxsize as a tuple--should give same answer
     boxsize = (boxsize, boxsize, boxsize)
-    zre2 = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre2 = zreion.apply_zreion_fast(
+        data, zmean, alpha, k0, boxsize, rsmooth, deconvolve
+    )
     assert np.allclose(zre, zre2)
 
     return
@@ -367,7 +376,7 @@ def test_apply_zreion_fast(fake_data):
 
 @fake_data_cases
 def test_apply_zreion_fast_no_deconvolution(fake_data):
-    """Test apply_zreion_fast with no deconvolution"""
+    """Test apply_zreion_fast with no deconvolution."""
     data, is_random = fake_data
     # clean up input data
     if not is_random:
@@ -379,9 +388,9 @@ def test_apply_zreion_fast_no_deconvolution(fake_data):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = False
-    zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
 
     # make sure results make sense
     if is_random:
@@ -395,7 +404,7 @@ def test_apply_zreion_fast_no_deconvolution(fake_data):
 
 
 def test_apply_zreion_fast_errors(fake_data_deterministic):
-    """Test errors in the apply_zreion_fast function"""
+    """Test errors in the apply_zreion_fast function."""
     data, is_random = fake_data_deterministic
 
     # define model parameters
@@ -403,27 +412,31 @@ def test_apply_zreion_fast_errors(fake_data_deterministic):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = True
 
     # test using only a 1d density array
     data_1d = data[0, 0, :]
     with pytest.raises(ValueError) as cm:
-        zre = zreion.apply_zreion_fast(data_1d, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+        zreion.apply_zreion_fast(
+            data_1d, zmean, alpha, k0, boxsize, rsmooth, deconvolve
+        )
     assert str(cm.value).startswith("density must be a 3d array")
 
     # test using a bad boxsize
     boxsize = (10.0, 10.0)
     with pytest.raises(ValueError) as cm:
-        zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
-    assert str(cm.value).startswith("boxsize must be either a single number or an array of length 3")
+        zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
+    assert str(cm.value).startswith(
+        "boxsize must be either a single number or an array of length 3"
+    )
 
     return
 
 
 @fake_data_cases
 def test_compare_methods(fake_data):
-    """Test that fast and "slow" methods yield same answer"""
+    """Test that fast and "slow" methods yield same answer."""
     data, is_random = fake_data
 
     # define model parameters
@@ -431,14 +444,16 @@ def test_compare_methods(fake_data):
     alpha = 0.9
     k0 = 1.0
     boxsize = 10.0
-    Rsmooth = 1.0
+    rsmooth = 1.0
     deconvolve = True
 
     # use slow function
-    zre1 = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre1 = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, rsmooth, deconvolve)
 
     # use fast function
-    zre2 = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    zre2 = zreion.apply_zreion_fast(
+        data, zmean, alpha, k0, boxsize, rsmooth, deconvolve
+    )
 
     assert np.allclose(zre1, zre2)
 

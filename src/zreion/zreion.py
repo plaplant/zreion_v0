@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Main module for applying zreion function."""
 
 import warnings
 import numpy as np
@@ -18,8 +19,11 @@ def tophat(x):
     where R is the characteristic radius of the tophat in real space and k is
     the amplitude of the Fourier vector. As can be shown, the tophat function
     has the form:
+
         W_R(k) = 3 * (sin(R * k) - (R * k) * cos(R * k)) / (R * k)**3.
+
     For small values of R*k, we use the Taylor series approximation, which is:
+
         W_R(k) ~ 1 - (R * k)**2 / 10.
 
     Note that this function itself does not handle a potential RuntimeWarning
@@ -50,6 +54,7 @@ def sinc(x):
     the cloud-in-cell (CIC) window function typically used to deposit particles
     onto a grid. For small values of x, we use the Taylor series appriximation,
     which is:
+
         sinc(x) ~ 1 - x**2 / 6.
 
     Note that this function itself does not handle a potential RuntimeWarning
@@ -149,7 +154,7 @@ def _fft3d(array, data_shape, direction="f"):
     return fftw_obj()
 
 
-def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=True):
+def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True):
     """
     Apply zreion ionization history to density field.
 
@@ -169,7 +174,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     boxsize : float or array of floats
         The physical extent of the box along each dimension. If a single value,
         this is assumed to be the same for each axis.
-    Rsmooth: float, optional
+    rsmooth: float, optional
         The smoothing length of the reionziation field, in Mpc/h. Defaults to 1
         Mpc/h.
     deconvolve : bool, optional
@@ -198,17 +203,17 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     density_fft = np.fft.rfftn(density)
 
     # compute spherical k-indices for cells
-    Nx, Ny, Nz = density.shape
+    nx, ny, nz = density.shape
     if len(boxsize) == 1:
-        Lx = Ly = Lz = boxsize[0]
+        lx = ly = lz = boxsize[0]
     else:
-        Lx, Ly, Lz = boxsize
-    dx = Lx / (2 * np.pi * Nx)
-    dy = Ly / (2 * np.pi * Ny)
-    dz = Lz / (2 * np.pi * Nz)
-    kx = np.fft.fftfreq(Nx, d=dx)
-    ky = np.fft.fftfreq(Ny, d=dy)
-    kz = np.fft.rfftfreq(Nz, d=dz)  # note we're using rfftfreq!
+        lx, ly, lz = boxsize
+    dx = lx / (2 * np.pi * nx)
+    dy = ly / (2 * np.pi * ny)
+    dz = lz / (2 * np.pi * nz)
+    kx = np.fft.fftfreq(nx, d=dx)
+    ky = np.fft.fftfreq(ny, d=dy)
+    kz = np.fft.rfftfreq(nz, d=dz)  # note we're using rfftfreq!
 
     # compute bias factor
     kkx, kky, kkz = np.meshgrid(kx, ky, kz, indexing="ij")
@@ -219,13 +224,13 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     # turn off numpy errors that come from near-zero values
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        smoothing_window = tophat(spherical_k * Rsmooth)
+        smoothing_window = tophat(spherical_k * rsmooth)
 
     if deconvolve:
         # compute deconvolution window in grid units
-        kkx *= Lx / Nx
-        kky *= Ly / Ny
-        kkz *= Lz / Nz
+        kkx *= lx / nx
+        kky *= ly / ny
+        kkz *= lz / nz
         # turn off numpy errors that come from near-zero values
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -258,7 +263,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=Tru
     return zreion
 
 
-def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolve=True):
+def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True):
     """
     Use as a fast, drop-in replacement for apply_zreion.
 
@@ -282,7 +287,7 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
     boxsize : float or array of floats
         The physical extent of the box along each dimension. If a single value,
         this is assumed to be the same for each axis.
-    Rsmooth: float, optional
+    rsmooth: float, optional
         The smoothing length of the reionziation field, in Mpc/h. Defaults to 1
         Mpc/h.
     deconvolve : bool, optional
@@ -308,9 +313,9 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
             )
     # unpack boxsize argument
     if len(boxsize) == 1:
-        Lx = Ly = Lz = boxsize[0]
+        lx = ly = lz = boxsize[0]
     else:
-        Lx, Ly, Lz = boxsize
+        lx, ly, lz = boxsize
 
     # save input array shape
     array_shape = density.shape
@@ -320,10 +325,10 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, Rsmooth=1.0, deconvolv
 
     # call cython funtion for applying bias relation
     # need to tell function if last dimension has an odd number of elements
-    odd_Nz = density.shape[2] % 2 == 1
+    odd_nz = density.shape[2] % 2 == 1
     density_fft = np.asarray(
         _zreion._apply_zreion(
-            density_fft, alpha, k0, Lx, Ly, Lz, Rsmooth, deconvolve, odd_Nz
+            density_fft, alpha, k0, lx, ly, lz, rsmooth, deconvolve, odd_nz
         )
     )
 

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-    Setup file for zreion.
-    Use setup.cfg to configure your project.
+Setup file for zreion.
 
-    This file was generated with PyScaffold 3.2.3.
-    PyScaffold helps you to put up the scaffold of your new Python project.
-    Learn more under: https://pyscaffold.org/
+Use setup.cfg to configure this project.
+
+This file was generated with PyScaffold 3.2.3.
+PyScaffold helps you to put up the scaffold of your new Python project.
+Learn more under: https://pyscaffold.org/
 """
 import sys
 
@@ -37,6 +38,5 @@ except VersionConflict:
 
 if __name__ == "__main__":
     setup(
-        use_pyscaffold=True,
-        ext_modules=cythonize([zreion_ext], language_level=3),
+        use_pyscaffold=True, ext_modules=cythonize([zreion_ext], language_level=3),
     )

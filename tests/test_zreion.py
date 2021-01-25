@@ -243,7 +243,181 @@ def test_apply_zreion(fake_data):
         atol = 1e-1
     else:
         atol = 1e-6
-    print("mean: ", np.mean(zre))
     assert np.isclose(np.mean(zre), zmean, atol=atol)
+
+    # also test passing in boxsize as a tuple--should give same answer
+    boxsize = (boxsize, boxsize, boxsize)
+    zre2 = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    assert np.allclose(zre, zre2)
+
+    return
+
+
+@fake_data_cases
+def test_apply_zreion_no_deconvolution(fake_data):
+    """Test apply_zreion with no deconvolution"""
+    data, is_random = fake_data
+    # clean up input data
+    if not is_random:
+        data_mean = np.mean(data)
+        data = (data - data_mean) / data_mean
+
+    # test with no deconvolution
+    zmean = 8.0
+    alpha = 0.9
+    k0 = 1.0
+    boxsize = 10.0
+    Rsmooth = 1.0
+    deconvolve = False
+    zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+
+    # make sure results make sense
+    if is_random:
+        # agreement is not great for random values because of small array size
+        atol = 1e-1
+    else:
+        atol = 1e-6
+    assert np.isclose(np.mean(zre), zmean, atol=atol)
+
+    return
+
+
+def test_apply_zreion_errors(fake_data_deterministic):
+    """Test errors in the apply_zreion function"""
+    data, is_random = fake_data_deterministic
+
+    # define model parameters
+    zmean = 8.0
+    alpha = 0.9
+    k0 = 1.0
+    boxsize = 10.0
+    Rsmooth = 1.0
+    deconvolve = True
+
+    # test using only a 1d density array
+    data_1d = data[0, 0, :]
+    with pytest.raises(ValueError) as cm:
+        zre = zreion.apply_zreion(data_1d, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    assert str(cm.value).startswith("density must be a 3d array")
+
+    # test using a bad boxsize
+    boxsize = (10.0, 10.0)
+    with pytest.raises(ValueError) as cm:
+        zre = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    assert str(cm.value).startswith("boxsize must be either a single number or an array of length 3")
+
+    return
+
+
+@fake_data_cases
+def test_apply_zreion_fast(fake_data):
+    """Test apply_zreion_fast"""
+    data, is_random = fake_data
+    # clean up input data
+    if not is_random:
+        data_mean = np.mean(data)
+        data = (data - data_mean) / data_mean
+
+    # define model parameters
+    zmean = 8.0
+    alpha = 0.9
+    k0 = 1.0
+    boxsize = 10.0
+    Rsmooth = 1.0
+    deconvolve = True
+    zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+
+    # make sure results make sense
+    if is_random:
+        # agreement is not great for random values because of small array size
+        atol = 1e-1
+    else:
+        atol = 1e-6
+    assert np.isclose(np.mean(zre), zmean, atol=atol)
+
+    # also test passing in boxsize as a tuple--should give same answer
+    boxsize = (boxsize, boxsize, boxsize)
+    zre2 = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    assert np.allclose(zre, zre2)
+
+    return
+
+
+@fake_data_cases
+def test_apply_zreion_fast_no_deconvolution(fake_data):
+    """Test apply_zreion_fast with no deconvolution"""
+    data, is_random = fake_data
+    # clean up input data
+    if not is_random:
+        data_mean = np.mean(data)
+        data = (data - data_mean) / data_mean
+
+    # test with no deconvolution
+    zmean = 8.0
+    alpha = 0.9
+    k0 = 1.0
+    boxsize = 10.0
+    Rsmooth = 1.0
+    deconvolve = False
+    zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+
+    # make sure results make sense
+    if is_random:
+        # agreement is not great for random values because of small array size
+        atol = 1e-1
+    else:
+        atol = 1e-6
+    assert np.isclose(np.mean(zre), zmean, atol=atol)
+
+    return
+
+
+def test_apply_zreion_fast_errors(fake_data_deterministic):
+    """Test errors in the apply_zreion_fast function"""
+    data, is_random = fake_data_deterministic
+
+    # define model parameters
+    zmean = 8.0
+    alpha = 0.9
+    k0 = 1.0
+    boxsize = 10.0
+    Rsmooth = 1.0
+    deconvolve = True
+
+    # test using only a 1d density array
+    data_1d = data[0, 0, :]
+    with pytest.raises(ValueError) as cm:
+        zre = zreion.apply_zreion_fast(data_1d, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    assert str(cm.value).startswith("density must be a 3d array")
+
+    # test using a bad boxsize
+    boxsize = (10.0, 10.0)
+    with pytest.raises(ValueError) as cm:
+        zre = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+    assert str(cm.value).startswith("boxsize must be either a single number or an array of length 3")
+
+    return
+
+
+@fake_data_cases
+def test_compare_methods(fake_data):
+    """Test that fast and "slow" methods yield same answer"""
+    data, is_random = fake_data
+
+    # define model parameters
+    zmean = 8.0
+    alpha = 0.9
+    k0 = 1.0
+    boxsize = 10.0
+    Rsmooth = 1.0
+    deconvolve = True
+
+    # use slow function
+    zre1 = zreion.apply_zreion(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+
+    # use fast function
+    zre2 = zreion.apply_zreion_fast(data, zmean, alpha, k0, boxsize, Rsmooth, deconvolve)
+
+    assert np.allclose(zre1, zre2)
 
     return

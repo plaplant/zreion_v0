@@ -1,4 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
+# Copyright (c) 2020 Paul La Plante
+# Licensed under the MIT License
 
 # distutils: language = c
 # cython: linetrace=True

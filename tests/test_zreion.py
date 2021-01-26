@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2021 Paul La Plante
+# Licensed under the MIT License
 """Tests for zreion.zreion module."""
 
 import pytest

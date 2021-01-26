@@ -1,1 +1,6 @@
+include *.md
+include *.rst
+include LICENSE.txt
+recursive-include tests *.py
+recursive-include src/zreion *.py
 include src/zreion/zreion.pyx

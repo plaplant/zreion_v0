@@ -1,7 +1,11 @@
 # zreion
 
-zreion is a way of quickly computing a "redshift of reionization" field using a
-semi-numeric method developed in [Battaglia et
+[![build](https://github.com/plaplant/zreion/workflows/Run%20Tests/badge.svg?branch=main)](https://github.com/plaplant/zreion/actions)
+[![coverage](https://codecov.io/gh/plaplant/zreion/badge.svg?branch=main)](https://codecov.io/gh/plaplant/zreion)
+[![license](https://img.shields.io/github/license/plaplant/zreion))](https://opensource.org/licenses/MIT)
+
+`zreion` is a way of quickly computing a "redshift of reionization" field using
+a semi-numeric method developed in [Battaglia et
 al. (2013)](https://ui.adsabs.harvard.edu/abs/2013ApJ...776...81B/abstract). The
 method assumes the redshift of reionization for a particular point in a
 cosmological volume is a biased tracer of the matter field, and can be written

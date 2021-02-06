@@ -314,6 +314,10 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolv
             raise ValueError(
                 "boxsize must be either a single number or an array of length 3"
             )
+
+    # save input type
+    input_type = density.dtype
+
     # unpack boxsize argument
     if len(boxsize) == 1:
         lx = ly = lz = boxsize[0]
@@ -325,6 +329,9 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolv
 
     # perform fft
     density_fft = _fft3d(density, array_shape, direction="f")
+
+    # cast to required type
+    density_fft = density_fft.astype(np.complex64)
 
     # call cython funtion for applying bias relation
     # need to tell function if last dimension has an odd number of elements
@@ -342,4 +349,4 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolv
     density *= 1 + zmean
     density += zmean
 
-    return density
+    return density.astype(input_type)

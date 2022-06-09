@@ -157,7 +157,7 @@ def _fft3d(array, data_shape, direction="f"):
 def apply_zreion(
     density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True, b0=1.0 / 1.686
 ):
-    """
+    r"""
     Apply zreion ionization history to density field.
 
     Parameters
@@ -182,8 +182,9 @@ def apply_zreion(
     deconvolve : bool, optional
         Whether to deconvolve the CIC particle deposition window. If density
         grid is derived in Eulerian space directly, this step is not needed.
-    b_0 : float, optional
-        Default = 0.593, the b_0 value of the bias parameter (if fitting for)
+    b0 : float, optional
+        The b_0 value of the bias parameter. Defaults to 1 / \delta_c.
+
     Returns
     -------
     zreion : numpy array
@@ -269,7 +270,7 @@ def apply_zreion(
 def apply_zreion_fast(
     density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True, b0=1.0 / 1.686
 ):
-    """
+    r"""
     Use as a fast, drop-in replacement for apply_zreion.
 
     The speedups are accomplished by using pyfftw for FFT computation, and
@@ -298,8 +299,8 @@ def apply_zreion_fast(
     deconvolve : bool, optional
         Whether to deconvolve the CIC particle deposition window. If density
         grid is derived in Eulerian space directly, this step is not needed.
-    b_0 : float, optional
-        Default = 0.593, the b_0 value of the bias parameter (if fitting for)
+    b0 : float, optional
+        The b_0 value of the bias parameter. Defaults to 1 / \delta_c.
 
     Returns
     -------

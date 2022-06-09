@@ -10,10 +10,6 @@ import pyfftw
 
 from . import _zreion
 
-# define constants
-b0 = 1.0 / 1.686
-
-
 def tophat(x):
     """
     Compute spherical tophat Fourier window function.
@@ -157,7 +153,7 @@ def _fft3d(array, data_shape, direction="f"):
     return fftw_obj()
 
 
-def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True):
+def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True,  b0 = 1.0 / 1.686):
     """
     Apply zreion ionization history to density field.
 
@@ -183,7 +179,8 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=Tru
     deconvolve : bool, optional
         Whether to deconvolve the CIC particle deposition window. If density
         grid is derived in Eulerian space directly, this step is not needed.
-
+    b_0 : float, optional
+        Default = 0.593, the b_0 value of the bias parameter (if fitting for)
     Returns
     -------
     zreion : numpy array
@@ -266,7 +263,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=Tru
     return zreion
 
 
-def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True):
+def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True, b0 = 1.0 / 1.686):
     """
     Use as a fast, drop-in replacement for apply_zreion.
 
@@ -296,6 +293,8 @@ def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolv
     deconvolve : bool, optional
         Whether to deconvolve the CIC particle deposition window. If density
         grid is derived in Eulerian space directly, this step is not needed.
+    b_0 : float, optional
+        Default = 0.593, the b_0 value of the bias parameter (if fitting for)
 
     Returns
     -------

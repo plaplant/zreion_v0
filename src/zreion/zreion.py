@@ -10,6 +10,7 @@ import pyfftw
 
 from . import _zreion
 
+
 def tophat(x):
     """
     Compute spherical tophat Fourier window function.
@@ -153,7 +154,9 @@ def _fft3d(array, data_shape, direction="f"):
     return fftw_obj()
 
 
-def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True,  b0 = 1.0 / 1.686):
+def apply_zreion(
+    density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True, b0=1.0 / 1.686
+):
     """
     Apply zreion ionization history to density field.
 
@@ -263,7 +266,9 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=Tru
     return zreion
 
 
-def apply_zreion_fast(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True, b0 = 1.0 / 1.686):
+def apply_zreion_fast(
+    density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=True, b0=1.0 / 1.686
+):
     """
     Use as a fast, drop-in replacement for apply_zreion.
 

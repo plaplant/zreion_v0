@@ -75,7 +75,7 @@ fake_data_cases = pytest_cases.parametrize_plus(
 def test_tophat():
     """Test tophat window function calculation."""
     invals = np.linspace(1, 10, num=50)
-    refvals = 3 * (np.sin(invals) - invals * np.cos(invals)) / invals ** 3
+    refvals = 3 * (np.sin(invals) - invals * np.cos(invals)) / invals**3
     outvals = zreion.tophat(invals)
     assert np.allclose(refvals, outvals)
 
@@ -87,7 +87,7 @@ def test_tophat():
 
     # also test small values
     invals = np.asarray([-1e-7, -1e-8, -1e-9, 0, 1e-9, 1e-8, 1e-7])
-    refvals = 1 - invals ** 2 / 10.0
+    refvals = 1 - invals**2 / 10.0
     # we get a numpy RuntimeWarning with small/invalid values
     with pytest.warns(RuntimeWarning) as record:
         outvals = zreion.tophat(invals)
@@ -115,7 +115,7 @@ def test_sinc():
 
     # also test small values
     invals = np.asarray([-1e-7, -1e-8, -1e-9, 0, 1e-9, 1e-8, 1e-7])
-    refvals = 1 - invals ** 2 / 6.0
+    refvals = 1 - invals**2 / 6.0
     # we get a numpy RuntimeWarning with small/invalid values
     with pytest.warns(RuntimeWarning) as record:
         outvals = zreion.sinc(invals)

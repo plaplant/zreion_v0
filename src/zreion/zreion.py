@@ -45,7 +45,7 @@ def tophat(x):
         An array of the same size containing the tophat applied to each element.
     """
     return np.where(
-        np.abs(x) > 1e-6, 3 * (np.sin(x) - x * np.cos(x)) / x ** 3, 1 - x ** 2 / 10.0
+        np.abs(x) > 1e-6, 3 * (np.sin(x) - x * np.cos(x)) / x**3, 1 - x**2 / 10.0
     )
 
 
@@ -75,7 +75,7 @@ def sinc(x):
     ndarray
         An array of the same size containing sinc applied to each element.
     """
-    return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x ** 2 / 6.0)
+    return np.where(np.abs(x) > 1e-6, np.sin(x) / x, 1 - x**2 / 6.0)
 
 
 def _fft3d(array, data_shape, direction="f"):
@@ -220,7 +220,7 @@ def apply_zreion(density, zmean, alpha, k0, boxsize, rsmooth=1.0, deconvolve=Tru
 
     # compute bias factor
     kkx, kky, kkz = np.meshgrid(kx, ky, kz, indexing="ij")
-    spherical_k = np.sqrt(kkx ** 2 + kky ** 2 + kkz ** 2)
+    spherical_k = np.sqrt(kkx**2 + kky**2 + kkz**2)
     bias_val = b0 / (1 + spherical_k / k0) ** alpha
 
     # compute smoothing factor

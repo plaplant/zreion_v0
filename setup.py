@@ -41,5 +41,6 @@ except VersionConflict:
 
 if __name__ == "__main__":
     setup(
-        use_pyscaffold=True, ext_modules=cythonize([zreion_ext], language_level=3),
+        use_pyscaffold=True,
+        ext_modules=cythonize([zreion_ext], language_level=3),
     )

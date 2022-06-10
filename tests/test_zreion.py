@@ -61,7 +61,7 @@ def fake_data_random_anisotropic():
 
 
 # define cases decorator
-fake_data_cases = pytest_cases.parametrize_plus(
+fake_data_cases = pytest_cases.parametrize(
     "fake_data",
     [
         pytest_cases.fixture_ref(fake_data_deterministic),

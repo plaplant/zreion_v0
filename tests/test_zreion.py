@@ -6,6 +6,7 @@
 import pytest
 import pytest_cases
 import numpy as np
+from packaging.version import parse
 
 import zreion.zreion as zreion
 
@@ -92,7 +93,12 @@ def test_tophat():
     with pytest.warns(RuntimeWarning) as record:
         outvals = zreion.tophat(invals)
     assert len(record) == 1
-    assert record[0].message.args[0] == "invalid value encountered in true_divide"
+    # error message changes based on numpy version
+    np_ver = parse(np.__version__)
+    if np_ver.major == 1 and np_ver.minor < 23:
+        assert record[0].message.args[0] == "invalid value encountered in true_divide"
+    else:
+        assert record[0].message.args[0] == "invalid value encountered in divide"
 
     # make sure values agree
     assert np.allclose(refvals, outvals)
@@ -120,7 +126,12 @@ def test_sinc():
     with pytest.warns(RuntimeWarning) as record:
         outvals = zreion.sinc(invals)
     assert len(record) == 1
-    assert record[0].message.args[0] == "invalid value encountered in true_divide"
+    # error message changes based on numpy version
+    np_ver = parse(np.__version__)
+    if np_ver.major == 1 and np_ver.minor < 23:
+        assert record[0].message.args[0] == "invalid value encountered in true_divide"
+    else:
+        assert record[0].message.args[0] == "invalid value encountered in divide"
 
     # make sure values agree
     assert np.allclose(refvals, outvals)

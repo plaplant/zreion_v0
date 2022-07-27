@@ -20,6 +20,25 @@ import numpy
 from Cython.Build import cythonize
 
 
+def _is_platform_mac():
+    return sys.platform == "darwin"
+
+
+def _is_platform_windows():
+    return sys.platform == "win32"
+
+
+# define cython compile args, depending on platform
+if _is_platform_mac():
+    extra_compile_args = ["-O3"]
+    extra_link_args = []
+elif _is_platform_windows():
+    extra_compile_args = ["/Ox", "/openmp"]
+    extra_link_args = ["/openmp"]
+else:
+    extra_compile_args = ["-O3", "-fopenmp"]
+    extra_link_args = ["-fopenmp"]
+
 zreion_ext = Extension(
     "zreion._zreion",
     sources=["src/zreion/zreion.pyx"],
@@ -27,8 +46,8 @@ zreion_ext = Extension(
         ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"),
         ("CYTHON_TRACE_NOGIL", "1"),
     ],
-    extra_compile_args=["-fopenmp"],
-    extra_link_args=["-fopenmp"],
+    extra_compile_args=extra_compile_args,
+    extra_link_args=extra_link_args,
     include_dirs=[numpy.get_include()],
 )
 

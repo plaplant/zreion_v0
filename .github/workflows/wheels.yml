@@ -25,6 +25,8 @@ jobs:
         uses: pypa/cibuildwheel@v2.8.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_TEST_REQUIRES: packaging pytest pytest-cov pytest-cases
+          CIBW_TEST_COMMAND: "python -m pytest {package}/tests"
 
       - uses: actions/upload-artifact@v3
         with:

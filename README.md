@@ -36,5 +36,5 @@ top-level of the repo. In addition to the package dependencies, it requires
 `packaging`, `pytest-cov` and `pytest-cases`. These can be installed using:
 
 ```
-pip install .[testing]
+pip install .[test]
 ```

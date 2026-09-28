@@ -3,8 +3,8 @@
 # Licensed under the MIT License
 
 """Init file for zreion."""
-from pkg_resources import get_distribution, DistributionNotFound
 
+from pkg_resources import get_distribution, DistributionNotFound
 
 try:
     # Change here if project is renamed and does not equal the package name
